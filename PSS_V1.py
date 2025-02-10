@@ -6,7 +6,7 @@ import sys
 import pymunk
 
 
-#making the menu
+#main code
 
 #setup, next 3 lines are backup window in case im stupid
 #window = tk.Tk() #create window
