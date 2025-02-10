@@ -41,9 +41,9 @@ def menuProjectileButton_func():
                                 body_type = pymunk.Body.DYNAMIC
                                 ) #mass, inertia, body type, notes on body type at the bottom
         cannonBall.position = (300, 0) #put it at a place on the screen (CURRENTLY FOR TESTING)
-        shape = pymunk.Circle(cannonBall) #makes cannon ball hitbox a circle
-        Pspace.add(cannonBall, shape)
-        return shape
+        cannonCircle = pymunk.Circle(cannonBall) #makes cannon ball hitbox a circle
+        Pspace.add(cannonBall, cannonCircle)
+        return cannonCircle
 
     def drawProjectile():
         pass #placeholder until I watch more
@@ -68,7 +68,7 @@ def menuProjectileButton_func():
                     Prun = False #pressing red x actually closes the projectiles window
 
             projectileWindow.fill((124, 252, 0)) #colour
-            Pspace.step(1/50)
+            Pspace.step(1/50) #updates physics simulation loop every 0.02 seconds
             pygame.display.flip() #update entire display
 
     projectileLogic()
