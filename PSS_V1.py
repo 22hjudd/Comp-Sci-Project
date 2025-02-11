@@ -35,20 +35,25 @@ titleLabel.grid(row = 0,
 def menuProjectileButton_func():
     Mwindow.destroy() #close the menu
     
-    def createProjectile():
+    def createProjectile(Pspace):
         cannonBall = pymunk.Body(10,
                                 50,
                                 body_type = pymunk.Body.DYNAMIC
                                 ) #mass, inertia, body type, notes on body type at the bottom
         cannonBall.position = (300, 0) #put it at a place on the screen (CURRENTLY FOR TESTING)
-        cannonCircle = pymunk.Circle(cannonBall) #makes cannon ball hitbox a circle
+        cannonCircle = pymunk.Circle(cannonBall, 5) #makes cannon ball hitbox a circle
         Pspace.add(cannonBall, cannonCircle)
         return cannonCircle
 
-    def drawProjectile():
-        pass #placeholder until I watch more
+    def drawProjectile(cannonBalls):
+        for CB in cannonBalls:
+            posX = int(CB.body.position.x)
+            posY = int(CB.body.position.y)
+            pygame.draw.circle(projectileWindow,
+                              (0,0,0), 
+                              (posX, posY),
+                              5)
         #https://www.pymunk.org/en/latest/tutorials.html
-        #simulating physics in python 10:45
 
     pygame.init() #initiate pygame
 
@@ -56,9 +61,11 @@ def menuProjectileButton_func():
     pygame.display.set_caption("Projectiles") #window title
 
     def projectileLogic():
-        global Pspace
+        global Pspace, cannonBalls
         Pspace = pymunk.Space()
         Pspace.gravity = (0, 10)
+        cannonBalls = []
+        cannonBalls.append(createProjectile(Pspace))
 
         #Main loop
         Prun = True
@@ -68,6 +75,7 @@ def menuProjectileButton_func():
                     Prun = False #pressing red x actually closes the projectiles window
 
             projectileWindow.fill((124, 252, 0)) #colour
+            drawProjectile(cannonBalls)
             Pspace.step(1/50) #updates physics simulation loop every 0.02 seconds
             pygame.display.flip() #update entire display
 
