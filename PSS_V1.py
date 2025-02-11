@@ -41,18 +41,18 @@ def menuProjectileButton_func():
                                 body_type = pymunk.Body.DYNAMIC
                                 ) #mass, inertia, body type, notes on body type at the bottom
         cannonBall.position = (300, 0) #put it at a place on the screen (CURRENTLY FOR TESTING)
-        cannonCircle = pymunk.Circle(cannonBall, 5) #makes cannon ball hitbox a circle
-        Pspace.add(cannonBall, cannonCircle)
-        return cannonCircle
+        cannonBallCircle = pymunk.Circle(cannonBall, 5) #makes cannon ball hitbox a circle
+        Pspace.add(cannonBall, cannonBallCircle) #adds to space
+        return cannonBallCircle
 
     def drawProjectile(cannonBalls):
         for CB in cannonBalls:
-            posX = int(CB.body.position.x)
-            posY = int(CB.body.position.y)
+            posX = int(CB.body.position.x) #x pos of cannon ball
+            posY = int(CB.body.position.y) #y pos of cannon ball
             pygame.draw.circle(projectileWindow,
                               (0,0,0), 
                               (posX, posY),
-                              5)
+                              20) #window, colour, position, size
         #https://www.pymunk.org/en/latest/tutorials.html
 
     pygame.init() #initiate pygame
@@ -61,11 +61,11 @@ def menuProjectileButton_func():
     pygame.display.set_caption("Projectiles") #window title
 
     def projectileLogic():
-        global Pspace, cannonBalls
-        Pspace = pymunk.Space()
-        Pspace.gravity = (0, 10)
-        cannonBalls = []
-        cannonBalls.append(createProjectile(Pspace))
+        global Pspace, cannonBalls #globals required variables from other functions
+        Pspace = pymunk.Space() #creates a space
+        Pspace.gravity = (0, 10) #horizontal gravity, vertical gravity
+        cannonBalls = [] #empty list for cannon balls
+        cannonBalls.append(createProjectile(Pspace)) #appends the creation of the projectile to the list, and puts it in space
 
         #Main loop
         Prun = True
@@ -75,11 +75,11 @@ def menuProjectileButton_func():
                     Prun = False #pressing red x actually closes the projectiles window
 
             projectileWindow.fill((124, 252, 0)) #colour
-            drawProjectile(cannonBalls)
+            drawProjectile(cannonBalls) #draws the cannon ball on screen
             Pspace.step(1/50) #updates physics simulation loop every 0.02 seconds
             pygame.display.flip() #update entire display
 
-    projectileLogic()
+    projectileLogic() #runs the main loop + some other stuff when menu button is clicked
 
     pygame.quit() #quit pygame
     sys.exit() #quit sys
