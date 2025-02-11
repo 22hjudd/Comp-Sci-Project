@@ -1,9 +1,10 @@
+#setup
 import tkinter as tk #importing tkinter with the abbreviation tk for convinience
 from tkinter import ttk #classes for themed widgets
-import ttkbootstrap as ttkb
-import pygame
+import ttkbootstrap as ttkb #more useful tkinter
+import pygame #puts the physics on the screen
 import sys
-import pymunk
+import pymunk #does the physics
 
 
 #main code
@@ -84,6 +85,8 @@ def menuProjectileButton_func():
     pygame.quit() #quit pygame
     sys.exit() #quit sys
 
+#IDEAS
+#Use a static body as the floor so it interacts better with hitboxes
 
 def menuAerodynamicButton_func():
     Mwindow.destroy()
@@ -184,7 +187,7 @@ menuProjectileButton.grid(row = 1,
                          sticky = "nsew",
                          padx = 20,
                          pady = 20
-                         ) #puts the button into a grid (Arne) slot
+                         ) #puts the button into a grid (Arne (funny liverpool joke)) slot
 
 menuAerodynamicButton.grid(row = 1,
                           column = 1,
