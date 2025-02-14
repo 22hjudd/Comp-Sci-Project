@@ -35,24 +35,27 @@ titleLabel.grid(row = 0,
                pady = 20
                ) #puts the heading on the grid
 
-
+#WHY DID I PICK THE HARDEST TO DO FIRST
 def menuProjectileButton_func():
     Mwindow.destroy() #close the menu
     
     def createProjectile(Pspace):
         cannonBall = pymunk.Body(body_type = pymunk.Body.KINEMATIC) #(mass, inertia,) body type, notes on body type at the bottom
-        cannonBall.position = (115, 810)
+        cannonBall.position = (130, 785) #THIS IS TEMOPRARY WHILE CREATING SHOOTING SO I CAN SEE THINGS
+        cannonBall.friction = 0.5 #notes on friction and elasticity values at the bottom
+        cannonBall.elasticity = 0.5 #^^^
+        #might need density
         Pspace.add(cannonBall) #adds to space
-        return cannonBall
+        return cannonBall #makes it able to put on screen by returning
 
     def drawProjectile(cannonBall):
-        if cannonBall:
-            cannonBallRect = cannonBallImage.get_rect(center = (int(cannonBall.position.x), int(cannonBall.position.y)))
-            projectileWindow.blit(cannonBallImage, cannonBallRect)
+        if cannonBall: #get the cannon ball to pass into code
+            cannonBallRect = cannonBallImage.get_rect(center = (int(cannonBall.position.x), int(cannonBall.position.y))) #make the cannon ball have a rectangle hitbox
+            projectileWindow.blit(cannonBallImage, cannonBallRect) #put on screen
 
     def createCannon(Pspace):
         cannonBody = pymunk.Body(body_type = pymunk.Body.KINEMATIC)
-        cannonBody.position = (50, 830)
+        cannonBody.position = (60, 820)
         Pspace.add(cannonBody)
         return cannonBody
 
@@ -74,18 +77,22 @@ def menuProjectileButton_func():
         Pspace.gravity = (0, 10) #horizontal gravity, vertical gravity
 
         cannonBallImage = pygame.image.load('cannonBallImage.png')
-        cannonBallImage = pygame.transform.scale(cannonBallImage, (40, 40))
+        cannonBallImage = pygame.transform.scale(cannonBallImage, (20, 20))
 
         cannonImage = pygame.image.load('cannonImage.png')
-        cannonImage = pygame.transform.scale(cannonImage, (100, 100))
+        cannonImage = pygame.transform.scale(cannonImage, (150, 150))
 
         cannonBall = createProjectile(Pspace)
         cannonBody = createCannon(Pspace)
 
         drawSetup = pymunk.pygame_util.DrawOptions(projectileWindow) #sets up drawing stuff on the screen
 
-        static: List[pymunk.Shape] = [pymunk.Segment(Pspace.static_body, (0, 875), (2000, 875), 10)] #the floor
-        Pspace.add(*static) #add floor to space
+        static: List[pymunk.Shape] = [pymunk.Segment(Pspace.static_body,
+                                                    (0, 875),
+                                                    (2000, 875), 
+                                                    10)
+                                                    ] #the floor
+        Pspace.add(*static) #add all of static list to space. Other things may be added to this list further in development
 
         #Main loop
         Prun = True
@@ -93,10 +100,16 @@ def menuProjectileButton_func():
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     Prun = False #pressing red x actually closes the projectiles window
+            
+            keyPress = pygame.key.get_pressed()
+
+            mousePoint = pymunk.pygame_util.from_pygame(Vec2d(*pygame.mouse.get_pos()), projectileWindow) #get the mouse position using vectors
+            cannonBody.angle = (mousePoint - cannonBody.position).angle #calculate the angle of the cannon in relation to the mouse
+            #cannon ball body needs to be same angle of rotation but further forward
 
             projectileWindow.fill((124, 252, 0)) #colour
             drawProjectile(cannonBall) #draws the cannon ball on screen
-            drawCannon(cannonBody)
+            drawCannon(cannonBody) #draws the cannon on the screen
             Pspace.debug_draw(drawSetup) #draw the stuff
             fps = 60
             clock.tick(fps)
@@ -108,8 +121,8 @@ def menuProjectileButton_func():
     pygame.quit() #quit pygame
     sys.exit() #quit sys
 
-#IDEAS
-#Use a static body as the floor so it interacts better with hitboxes
+#IDEAS FOR LATER
+#Use a static body as the floor so it interacts better with hitboxes (THIS IS MOSTLY IMPLEMENTED NOW, COMPLICATED)
 #Use horizontal gravity for aerodynamics
 #create a function that when press a button it returns to the menu, using similar code to
 #make Mwindow global, put all of the menu code into a function
@@ -215,7 +228,7 @@ menuProjectileButton.grid(row = 1,
                          sticky = "nsew",
                          padx = 20,
                          pady = 20
-                         ) #puts the button into a grid (Arne (funny liverpool joke)) slot
+                         ) #puts the button into a grid (Arne) slot
 
 menuAerodynamicButton.grid(row = 1,
                           column = 1,
@@ -243,6 +256,13 @@ menuOptionsButton.grid(row = 2,
 Mwindow.mainloop() #run the window
 
 #notes on pymunk
+
 #static body - body doesnt move but can be collided with
 #dynamic body - can be moved by physics
 #kinematic body - body that can be moved by the user, or other non-physical code
+
+#friction and elasticity
+#0 has no friction or bounce
+#1 is a perfect bounce (no energy is lost)
+#Between 1 and 0 energy is lost
+#Greater than 1 energy is gained
