@@ -41,25 +41,29 @@ def menuProjectileButton_func():
     
     def createProjectile(Pspace):
         cannonBall = pymunk.Body(body_type = pymunk.Body.KINEMATIC) #(mass, inertia,) body type, notes on body type at the bottom
-        cannonBall.position = (70, 550) #put it at a place on the screen (CURRENTLY FOR TESTING)
+        cannonBall.position = (115, 810)
         Pspace.add(cannonBall) #adds to space
+        return cannonBall
 
-    def drawProjectile():
-        cannonBallRect = cannonBallImage.get_rect()
-        projectileWindow.blit(cannonBallImage, cannonBallRect)
+    def drawProjectile(cannonBall):
+        if cannonBall:
+            cannonBallRect = cannonBallImage.get_rect(center = (int(cannonBall.position.x), int(cannonBall.position.y)))
+            projectileWindow.blit(cannonBallImage, cannonBallRect)
 
     def createCannon(Pspace):
         cannonBody = pymunk.Body(body_type = pymunk.Body.KINEMATIC)
-        cannonBody.position = 50, 550
+        cannonBody.position = (50, 830)
         Pspace.add(cannonBody)
+        return cannonBody
 
-    def drawCannon():
-        cannonRect = cannonImage.get_rect()
-        projectileWindow.blit(cannonImage, cannonRect)
+    def drawCannon(cannonBody):
+        if cannonBody:
+            cannonRect = cannonImage.get_rect(center = (int(cannonBody.position.x), int(cannonBody.position.y)))
+            projectileWindow.blit(cannonImage, cannonRect)
 
     pygame.init() #initiate pygame
 
-    projectileWindow = pygame.display.set_mode((1200, 600), pygame.RESIZABLE) #display size
+    projectileWindow = pygame.display.set_mode((1200, 900), pygame.RESIZABLE) #display size
     pygame.display.set_caption("Projectiles") #window title
 
     clock = pygame.time.Clock()
@@ -68,18 +72,19 @@ def menuProjectileButton_func():
         global Pspace, cannonBallImage, cannonImage #globals required variables from other functions
         Pspace = pymunk.Space() #creates a space
         Pspace.gravity = (0, 10) #horizontal gravity, vertical gravity
-        cannonBallImage = pygame.image.load('cannonBallImage.png') #load cannon ball image
-        cannonBallImage = pygame.transform.scale(cannonBallImage, (40, 40)) #changes image size
-        cannonBalls = [] #empty list for cannon balls
-        cannonBalls.append(createProjectile(Pspace)) #appends the creation of the projectile to the list, and puts it in space
+
+        cannonBallImage = pygame.image.load('cannonBallImage.png')
+        cannonBallImage = pygame.transform.scale(cannonBallImage, (40, 40))
+
         cannonImage = pygame.image.load('cannonImage.png')
-        cannonImage = pygame.transform.scale(cannonImage, (40, 40))
-        cannonBodys = []
-        cannonBodys.append(createCannon(Pspace))
+        cannonImage = pygame.transform.scale(cannonImage, (100, 100))
+
+        cannonBall = createProjectile(Pspace)
+        cannonBody = createCannon(Pspace)
 
         drawSetup = pymunk.pygame_util.DrawOptions(projectileWindow) #sets up drawing stuff on the screen
 
-        static: List[pymunk.Shape] = [pymunk.Segment(Pspace.static_body, (0, 575), (1200, 575), 10)] #the floor
+        static: List[pymunk.Shape] = [pymunk.Segment(Pspace.static_body, (0, 875), (2000, 875), 10)] #the floor
         Pspace.add(*static) #add floor to space
 
         #Main loop
@@ -90,8 +95,8 @@ def menuProjectileButton_func():
                     Prun = False #pressing red x actually closes the projectiles window
 
             projectileWindow.fill((124, 252, 0)) #colour
-            drawProjectile() #draws the cannon ball on screen
-            drawCannon()
+            drawProjectile(cannonBall) #draws the cannon ball on screen
+            drawCannon(cannonBody)
             Pspace.debug_draw(drawSetup) #draw the stuff
             fps = 60
             clock.tick(fps)
