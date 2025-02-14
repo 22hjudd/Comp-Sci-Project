@@ -3,8 +3,11 @@ import tkinter as tk #importing tkinter with the abbreviation tk for convinience
 from tkinter import ttk #classes for themed widgets
 import ttkbootstrap as ttkb #more useful tkinter
 import pygame #puts the physics on the screen
-import sys
+import sys #system specific parameters
 import pymunk #does the physics
+import pymunk.pygame_util #draw pymunk objects in pygame
+from pymunk.vec2d import Vec2d #vectors
+from typing import List #for lists/arrays
 
 
 #main code
@@ -37,36 +40,58 @@ def menuProjectileButton_func():
     Mwindow.destroy() #close the menu
     
     def createProjectile(Pspace):
-        cannonBall = pymunk.Body(10,
-                                50,
-                                body_type = pymunk.Body.DYNAMIC
-                                ) #mass, inertia, body type, notes on body type at the bottom
-        cannonBall.position = (300, 0) #put it at a place on the screen (CURRENTLY FOR TESTING)
-        cannonBallCircle = pymunk.Circle(cannonBall, 5) #makes cannon ball hitbox a circle
+        cannonBall = pymunk.Body(body_type = pymunk.Body.KINEMATIC) #(mass, inertia,) body type, notes on body type at the bottom
+        cannonBall.position = (70, 550) #put it at a place on the screen (CURRENTLY FOR TESTING)
+        cannonBallCircle = pymunk.Circle(cannonBall, 15) #makes cannon ball hitbox a circle - RESIZE THE HITBOX (5) WHEN I FINALLY TEST COLLISION
         Pspace.add(cannonBall, cannonBallCircle) #adds to space
         return cannonBallCircle
 
     def drawProjectile(cannonBalls):
         for CB in cannonBalls:
-            posX = int(CB.body.position.x) #x pos of cannon ball
-            posY = int(CB.body.position.y) #y pos of cannon ball
-            pygame.draw.circle(projectileWindow,
-                              (0,0,0), 
-                              (posX, posY),
-                              20) #window, colour, position, size
-        #https://www.pymunk.org/en/latest/tutorials.html
+            CBposX = int(CB.body.position.x) #x pos of cannon ball
+            CBposY = int(CB.body.position.y) #y pos of cannon ball
+            cannonBallRect = cannonBallImage.get_rect(center = (CBposX, CBposY))
+            projectileWindow.blit(cannonBallImage, cannonBallRect)
+
+    def createCannon(Pspace):
+        cannonBody = pymunk.Body(body_type = pymunk.Body.KINEMATIC)
+        cannonShape = pymunk.Circle(cannonBody, 25)
+        cannonShape.sensor = True #non collidable
+        cannonBody.position = 50, 550
+        Pspace.add(cannonBody, cannonShape)
+        return cannonShape
+
+    def drawCannon(cannonBodys):
+        for C in cannonBodys:
+            CposX = int(C.body.position.x)
+            CposY = int(C.body.position.y)
+            cannonRect = cannonImage.get_rect(center = (CposX, CposY))
+            projectileWindow.blit(cannonImage, cannonRect)
 
     pygame.init() #initiate pygame
 
     projectileWindow = pygame.display.set_mode((1200, 600), pygame.RESIZABLE) #display size
     pygame.display.set_caption("Projectiles") #window title
 
+    clock = pygame.time.Clock()
+
     def projectileLogic():
-        global Pspace, cannonBalls #globals required variables from other functions
+        global Pspace, cannonBalls, cannonBallImage, cannonImage, cannonBodys #globals required variables from other functions
         Pspace = pymunk.Space() #creates a space
         Pspace.gravity = (0, 10) #horizontal gravity, vertical gravity
+        cannonBallImage = pygame.image.load('cannonBallImage.png') #load cannon ball image
+        cannonBallImage = pygame.transform.scale(cannonBallImage, (40, 40)) #changes image size
         cannonBalls = [] #empty list for cannon balls
         cannonBalls.append(createProjectile(Pspace)) #appends the creation of the projectile to the list, and puts it in space
+        cannonImage = pygame.image.load('cannonImage.png')
+        cannonImage = pygame.transform.scale(cannonImage, (40, 40))
+        cannonBodys = []
+        cannonBodys.append(createCannon(Pspace))
+
+        drawSetup = pymunk.pygame_util.DrawOptions(projectileWindow) #sets up drawing stuff on the screen
+
+        static: List[pymunk.Shape] = [pymunk.Segment(Pspace.static_body, (0, 575), (1200, 575), 5)] #the floor
+        Pspace.add(*static) #add floor to space
 
         #Main loop
         Prun = True
@@ -77,8 +102,13 @@ def menuProjectileButton_func():
 
             projectileWindow.fill((124, 252, 0)) #colour
             drawProjectile(cannonBalls) #draws the cannon ball on screen
-            Pspace.step(1/50) #updates physics simulation loop every 0.02 seconds
+            drawCannon(cannonBodys)
+            fps = 60
+            clock.tick(fps)
+            Pspace.step(1/fps) #updates physics simulation loop every 1/fps seconds
             pygame.display.flip() #update entire display
+
+        Pspace.debug_draw(drawSetup) #draw the stuff
 
     projectileLogic() #runs the main loop + some other stuff when menu button is clicked
 
@@ -87,6 +117,11 @@ def menuProjectileButton_func():
 
 #IDEAS
 #Use a static body as the floor so it interacts better with hitboxes
+#Use horizontal gravity for aerodynamics
+#create a function that when press a button it returns to the menu, using similar code to
+#make Mwindow global, put all of the menu code into a function
+#when button pressed, just run the menu code again
+#dont forget Mwindow.mainloop()
 
 def menuAerodynamicButton_func():
     Mwindow.destroy()
@@ -162,21 +197,21 @@ menuProjectileButton = ttkb.Button(master = Mwindow,
                                   ) #Pressing button opens projectiles window, bootstyle outline creates the hover over change colour effect
 
 menuAerodynamicButton = ttkb.Button(master = Mwindow,
-                                   text = 'Aerodynamics',
+                                   text = 'Aerodynamics (coming soon)',
                                    command = menuAerodynamicButton_func,
                                    width = 15,
                                    bootstyle = 'info-outline'
                                    )
 
 menuOrbitButton = ttkb.Button(master = Mwindow,
-                             text = 'Orbit',
+                             text = 'Orbit (coming soon)',
                              command = menuOrbitButton_func,
                              width = 15,
                              bootstyle = 'light-outline'
                              )
 
 menuOptionsButton = ttkb.Button(master = Mwindow,
-                               text = 'Options',
+                               text = 'Options (coming soon)',
                                command = menuOptionsButton_func,
                                width = 15,
                                bootstyle = 'warning-outline'
