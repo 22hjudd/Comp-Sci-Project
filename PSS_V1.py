@@ -42,31 +42,20 @@ def menuProjectileButton_func():
     def createProjectile(Pspace):
         cannonBall = pymunk.Body(body_type = pymunk.Body.KINEMATIC) #(mass, inertia,) body type, notes on body type at the bottom
         cannonBall.position = (70, 550) #put it at a place on the screen (CURRENTLY FOR TESTING)
-        cannonBallCircle = pymunk.Circle(cannonBall, 15) #makes cannon ball hitbox a circle - RESIZE THE HITBOX (5) WHEN I FINALLY TEST COLLISION
-        Pspace.add(cannonBall, cannonBallCircle) #adds to space
-        return cannonBallCircle
+        Pspace.add(cannonBall) #adds to space
 
-    def drawProjectile(cannonBalls):
-        for CB in cannonBalls:
-            CBposX = int(CB.body.position.x) #x pos of cannon ball
-            CBposY = int(CB.body.position.y) #y pos of cannon ball
-            cannonBallRect = cannonBallImage.get_rect(center = (CBposX, CBposY))
-            projectileWindow.blit(cannonBallImage, cannonBallRect)
+    def drawProjectile():
+        cannonBallRect = cannonBallImage.get_rect()
+        projectileWindow.blit(cannonBallImage, cannonBallRect)
 
     def createCannon(Pspace):
         cannonBody = pymunk.Body(body_type = pymunk.Body.KINEMATIC)
-        cannonShape = pymunk.Circle(cannonBody, 25)
-        cannonShape.sensor = True #non collidable
         cannonBody.position = 50, 550
-        Pspace.add(cannonBody, cannonShape)
-        return cannonShape
+        Pspace.add(cannonBody)
 
-    def drawCannon(cannonBodys):
-        for C in cannonBodys:
-            CposX = int(C.body.position.x)
-            CposY = int(C.body.position.y)
-            cannonRect = cannonImage.get_rect(center = (CposX, CposY))
-            projectileWindow.blit(cannonImage, cannonRect)
+    def drawCannon():
+        cannonRect = cannonImage.get_rect()
+        projectileWindow.blit(cannonImage, cannonRect)
 
     pygame.init() #initiate pygame
 
@@ -76,7 +65,7 @@ def menuProjectileButton_func():
     clock = pygame.time.Clock()
 
     def projectileLogic():
-        global Pspace, cannonBalls, cannonBallImage, cannonImage, cannonBodys #globals required variables from other functions
+        global Pspace, cannonBallImage, cannonImage #globals required variables from other functions
         Pspace = pymunk.Space() #creates a space
         Pspace.gravity = (0, 10) #horizontal gravity, vertical gravity
         cannonBallImage = pygame.image.load('cannonBallImage.png') #load cannon ball image
@@ -90,7 +79,7 @@ def menuProjectileButton_func():
 
         drawSetup = pymunk.pygame_util.DrawOptions(projectileWindow) #sets up drawing stuff on the screen
 
-        static: List[pymunk.Shape] = [pymunk.Segment(Pspace.static_body, (0, 575), (1200, 575), 5)] #the floor
+        static: List[pymunk.Shape] = [pymunk.Segment(Pspace.static_body, (0, 575), (1200, 575), 10)] #the floor
         Pspace.add(*static) #add floor to space
 
         #Main loop
@@ -101,14 +90,13 @@ def menuProjectileButton_func():
                     Prun = False #pressing red x actually closes the projectiles window
 
             projectileWindow.fill((124, 252, 0)) #colour
-            drawProjectile(cannonBalls) #draws the cannon ball on screen
-            drawCannon(cannonBodys)
+            drawProjectile() #draws the cannon ball on screen
+            drawCannon()
+            Pspace.debug_draw(drawSetup) #draw the stuff
             fps = 60
             clock.tick(fps)
             Pspace.step(1/fps) #updates physics simulation loop every 1/fps seconds
             pygame.display.flip() #update entire display
-
-        Pspace.debug_draw(drawSetup) #draw the stuff
 
     projectileLogic() #runs the main loop + some other stuff when menu button is clicked
 
