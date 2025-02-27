@@ -41,10 +41,9 @@ def menuProjectileButton_func():
     
     def createProjectile(Pspace):
         cannonBall = pymunk.Body(body_type = pymunk.Body.KINEMATIC) #(mass, inertia,) body type, notes on body type at the bottom
-        cannonBall.position = (130, 785) #THIS IS TEMOPRARY WHILE CREATING SHOOTING SO I CAN SEE THINGS
         cannonBall.friction = 0.5 #notes on friction and elasticity values at the bottom
         cannonBall.elasticity = 0.5 #^^^
-        #might need density
+        cannonBall.density = 0.1
         Pspace.add(cannonBall) #adds to space
         return cannonBall #makes it able to put on screen by returning
 
@@ -98,13 +97,16 @@ def menuProjectileButton_func():
         Prun = True
         while Prun:
             for event in pygame.event.get():
-                if event.type == pygame.QUIT:
+                if event.type == pygame.QUIT or event.type == pygame.KEYDOWN and (event.key in [pygame.K_ESCAPE]):
                     Prun = False #pressing red x actually closes the projectiles window
             
             keyPress = pygame.key.get_pressed()
 
             mousePoint = pymunk.pygame_util.from_pygame(Vec2d(*pygame.mouse.get_pos()), projectileWindow) #get the mouse position using vectors
             cannonBody.angle = (mousePoint - cannonBody.position).angle #calculate the angle of the cannon in relation to the mouse
+            cannonBall.position = cannonBody.position + Vec2d.from_polar(0, cannonBody.angle) #adding the position to the vector (length, angle)
+            cannonBall.angle = cannonBody.angle
+            #cannon rotation needs work
             #cannon ball body needs to be same angle of rotation but further forward
 
             projectileWindow.fill((124, 252, 0)) #colour
@@ -124,10 +126,15 @@ def menuProjectileButton_func():
 #IDEAS FOR LATER
 #Use a static body as the floor so it interacts better with hitboxes (THIS IS MOSTLY IMPLEMENTED NOW, COMPLICATED)
 #Use horizontal gravity for aerodynamics
+#Use a center gravity point for sun
+#
 #create a function that when press a button it returns to the menu, using similar code to
-#make Mwindow global, put all of the menu code into a function
-#when button pressed, just run the menu code again
-#dont forget Mwindow.mainloop()
+##make Mwindow global, put all of the menu code into a function
+##when button pressed, just run the menu code again
+##dont forget Mwindow.mainloop()
+#
+#make a seperate function for FLYING CANNON BALL
+#125, 146
 
 def menuAerodynamicButton_func():
     Mwindow.destroy()
