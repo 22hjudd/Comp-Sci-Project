@@ -26,7 +26,7 @@ Mwindow.columnconfigure((0, 1), weight = 1)
 Mwindow.rowconfigure((1, 2), weight = 1)
 
 titleLabel = ttkb.Label(master = Mwindow,
-                       text = 'Menu',
+                       text = 'Physics Scenario Simulator Menu',
                        font = 'Calibri 24 bold',
                        ) #creates heading
 titleLabel.grid(row = 0,
@@ -39,18 +39,24 @@ titleLabel.grid(row = 0,
 def menuProjectileButton_func():
     Mwindow.destroy() #close the menu
     
-    def createProjectile(Pspace):
-        cannonBall = pymunk.Body(body_type = pymunk.Body.KINEMATIC) #(mass, inertia,) body type, notes on body type at the bottom
-        cannonBall.friction = 0.5 #notes on friction and elasticity values at the bottom
-        cannonBall.elasticity = 0.5 #^^^
-        cannonBall.density = 0.1
-        Pspace.add(cannonBall) #adds to space
-        return cannonBall #makes it able to put on screen by returning
+    def createProjectile():
+        vs = [(), (), (), ()]
 
-    def drawProjectile(cannonBall):
-        if cannonBall: #get the cannon ball to pass into code
-            cannonBallRect = cannonBallImage.get_rect(center = (int(cannonBall.position.x), int(cannonBall.position.y))) #make the cannon ball have a rectangle hitbox
-            projectileWindow.blit(cannonBallImage, cannonBallRect) #put on screen
+        cannonBallBody = pymunk.Body(body_type = pymunk.Body.KINEMATIC) #(mass, inertia,) body type, notes on body type at the bottom
+        
+        cannonBallProp = pymunk.Poly(cannonBallBody, vs)
+        cannonBallProp.collision_type = 1
+        cannonBallProp.friction = 0.5 #notes on friction and elasticity values at the bottom
+        cannonBallProp.elasticity = 0.5 #^^^
+        cannonBallProp.density = 0.1 #prop for properties
+        
+        Pspace.add(cannonBallBody)
+        return cannonBallBody, cannonBallProp #makes it able to put on screen by returning
+
+    def drawProjectile(cannonBallProp):
+        if cannonBallProp: #get the cannon ball to pass into code
+            cannonBallRect = cannonBallImage.get_rect(center = (int(cannonBallProp.position.x), int(cannonBallProp.position.y))) #make the cannon ball have a rectangle hitbox
+            PWindow.blit(cannonBallImage, cannonBallRect) #put on screen
 
     def createCannon(Pspace):
         cannonBody = pymunk.Body(body_type = pymunk.Body.KINEMATIC)
@@ -61,11 +67,11 @@ def menuProjectileButton_func():
     def drawCannon(cannonBody):
         if cannonBody:
             cannonRect = cannonImage.get_rect(center = (int(cannonBody.position.x), int(cannonBody.position.y)))
-            projectileWindow.blit(cannonImage, cannonRect)
+            PWindow.blit(cannonImage, cannonRect)
 
     pygame.init() #initiate pygame
 
-    projectileWindow = pygame.display.set_mode((1200, 900), pygame.RESIZABLE) #display size
+    PWindow = pygame.display.set_mode((1200, 900), pygame.RESIZABLE) #display size
     pygame.display.set_caption("Projectiles") #window title
 
     clock = pygame.time.Clock()
@@ -81,10 +87,10 @@ def menuProjectileButton_func():
         cannonImage = pygame.image.load('cannonImage.png')
         cannonImage = pygame.transform.scale(cannonImage, (150, 150))
 
-        cannonBall = createProjectile(Pspace)
+        cannonBallBody = createProjectile(Pspace)
         cannonBody = createCannon(Pspace)
 
-        drawSetup = pymunk.pygame_util.DrawOptions(projectileWindow) #sets up drawing stuff on the screen
+        drawSetup = pymunk.pygame_util.DrawOptions(PWindow) #sets up drawing stuff on the screen
 
         static: List[pymunk.Shape] = [pymunk.Segment(Pspace.static_body,
                                                     (0, 875),
@@ -102,15 +108,15 @@ def menuProjectileButton_func():
             
             keyPress = pygame.key.get_pressed()
 
-            mousePoint = pymunk.pygame_util.from_pygame(Vec2d(*pygame.mouse.get_pos()), projectileWindow) #get the mouse position using vectors
+            mousePoint = pymunk.pygame_util.from_pygame(Vec2d(*pygame.mouse.get_pos()), PWindow) #get the mouse position using vectors
             cannonBody.angle = (mousePoint - cannonBody.position).angle #calculate the angle of the cannon in relation to the mouse
-            cannonBall.position = cannonBody.position + Vec2d.from_polar(0, cannonBody.angle) #adding the position to the vector (length, angle)
-            cannonBall.angle = cannonBody.angle
+            cannonBallBody.position = cannonBody.position + Vec2d.from_polar(0, cannonBody.angle) #adding the position to the vector (length, angle)
+            cannonBallBody.angle = cannonBody.angle
             #cannon rotation needs work
             #cannon ball body needs to be same angle of rotation but further forward
 
-            projectileWindow.fill((124, 252, 0)) #colour
-            drawProjectile(cannonBall) #draws the cannon ball on screen
+            PWindow.fill((124, 252, 0)) #colour
+            drawProjectile(cannonBallBody) #draws the cannon ball on screen
             drawCannon(cannonBody) #draws the cannon on the screen
             Pspace.debug_draw(drawSetup) #draw the stuff
             fps = 60
