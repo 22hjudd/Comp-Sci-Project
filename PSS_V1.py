@@ -8,6 +8,7 @@ import pymunk #does the physics
 import pymunk.pygame_util #draw pymunk objects in pygame
 from pymunk.vec2d import Vec2d #vectors
 from typing import List #for lists/arrays
+import math
 
 
 #main code
@@ -67,8 +68,10 @@ def menuProjectileButton_func():
 
     def drawCannon(cannonBody):
         if cannonBody:
-            cannonRect = cannonImage.get_rect(center = (int(cannonBody.position.x), int(cannonBody.position.y)))
-            PWindow.blit(cannonImage, cannonRect)
+            degrees = -math.degrees(cannonBody.angle)  # Convert radians to degrees
+            cannonRotation = pygame.transform.rotate(cannonImage, degrees)  # Rotate image
+            cannonRect = cannonRotation.get_rect(center=(int(cannonBody.position.x), int(cannonBody.position.y)))
+            PWindow.blit(cannonRotation, cannonRect)
 
     pygame.init() #initiate pygame
 
@@ -111,10 +114,9 @@ def menuProjectileButton_func():
 
             mousePoint = pymunk.pygame_util.from_pygame(Vec2d(*pygame.mouse.get_pos()), PWindow) #get the mouse position using vectors
             cannonBody.angle = (mousePoint - cannonBody.position).angle #calculate the angle of the cannon in relation to the mouse
-            cannonBallBody.position = cannonBody.position + Vec2d.from_polar(cannonBallProp.radius + 40, cannonBody.angle) #adding the position to the vector (length, angle)
-            cannonBallBody.angle = cannonBody.angle
-            #cannon rotation needs work
-            #cannon ball body needs to be same angle of rotation but further forward
+            cannonBallDiff = Vec2d(-38, -20).rotated(cannonBody.angle) #change distance from the centre of the cannon
+            cannonBallBody.position = cannonBody.position + cannonBallDiff #position the cannon ball by alligning with the cannon and then differntiating it from that point
+            cannonBallBody.angle = cannonBody.angle #both rotate at the same time and angle
 
             PWindow.fill((124, 252, 0)) #colour
             drawProjectile(cannonBallBody) #draws the cannon ball on screen
