@@ -17,16 +17,16 @@ import math
 #window = tk.Tk() #create window
 #window.title('Menu') #name window
 #window.geometry('600x400') #window size
-Mwindow = ttkb.Window(title = 'Menu',
-                      themename = 'darkly', 
-                      size = (600, 400)
+MWindow = ttkb.Window(title = 'Menu',
+                     themename = 'darkly', 
+                     size = (600, 400)
                      ) #make a bootstrap window for more customisation
 
 #creating a grid
-Mwindow.columnconfigure((0, 1), weight = 1)
-Mwindow.rowconfigure((1, 2), weight = 1)
+MWindow.columnconfigure((0, 1), weight = 1)
+MWindow.rowconfigure((1, 2), weight = 1)
 
-titleLabel = ttkb.Label(master = Mwindow,
+titleLabel = ttkb.Label(master = MWindow,
                        text = 'Physics Scenario Simulator Menu',
                        font = 'Calibri 24 bold',
                        ) #creates heading
@@ -37,8 +37,11 @@ titleLabel.grid(row = 0,
                ) #puts the heading on the grid
 
 #WHY DID I PICK THE HARDEST TO DO FIRST
-def menuProjectileButton_func():
-    Mwindow.destroy() #close the menu
+def menuProjectileButton_func(MWindow):
+    MWindow.destroy() #close the menu
+
+    def mainMenuPButton():
+        PWindow.destroy()
     
     def createProjectile():
         global cannonBallBody, cannonBallProp
@@ -73,12 +76,21 @@ def menuProjectileButton_func():
             cannonRect = cannonRotation.get_rect(center=(int(cannonBody.position.x), int(cannonBody.position.y)))
             PWindow.blit(cannonRotation, cannonRect)
 
+    global PWindow
+
     pygame.init() #initiate pygame
 
     PWindow = pygame.display.set_mode((1200, 900), pygame.RESIZABLE) #display size
     pygame.display.set_caption("Projectiles") #window title
 
     clock = pygame.time.Clock()
+
+    #FIX THIS LATER
+    destoryPWindow = ttkb.Button(master = PWindow,
+                                text = 'Return to main menu',
+                                command = mainMenuPButton
+                                )
+    destoryPWindow.pack()
 
     def projectileLogic():
         global Pspace, cannonBallImage, cannonImage, cannonBallBody, cannonBallProp #globals required variables from other functions
@@ -108,7 +120,7 @@ def menuProjectileButton_func():
         while Prun:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT or event.type == pygame.KEYDOWN and (event.key in [pygame.K_ESCAPE]):
-                    Prun = False #pressing red x actually closes the projectiles window
+                    Prun = False #pressing red x and escape closes the projectiles window
             
             keyPress = pygame.key.get_pressed()
 
@@ -138,15 +150,15 @@ def menuProjectileButton_func():
 #Use a center gravity point for sun
 #
 #create a function that when press a button it returns to the menu, using similar code to
-##make Mwindow global, put all of the menu code into a function
+##make MWindow global, put all of the menu code into a function
 ##when button pressed, just run the menu code again
-##dont forget Mwindow.mainloop()
+##dont forget MWindow.mainloop()
 #
 #make a seperate function for FLYING CANNON BALL
 #125, 146
 
 def menuAerodynamicButton_func():
-    Mwindow.destroy()
+    MWindow.destroy()
 
     pygame.init()
 
@@ -168,7 +180,7 @@ def menuAerodynamicButton_func():
 
 
 def menuOrbitButton_func():
-    Mwindow.destroy()
+    MWindow.destroy()
 
     pygame.init()
 
@@ -190,7 +202,7 @@ def menuOrbitButton_func():
 
 
 def menuOptionsButton_func():
-    Mwindow.destroy()
+    MWindow.destroy()
 
     pygame.init()
 
@@ -211,28 +223,28 @@ def menuOptionsButton_func():
     sys.exit()
 
 
-menuProjectileButton = ttkb.Button(master = Mwindow,
+menuProjectileButton = ttkb.Button(master = MWindow,
                                   text = 'Projectiles',
                                   command = menuProjectileButton_func,
                                   width = 15,
                                   bootstyle = 'success-outline'
                                   ) #Pressing button opens projectiles window, bootstyle outline creates the hover over change colour effect
 
-menuAerodynamicButton = ttkb.Button(master = Mwindow,
+menuAerodynamicButton = ttkb.Button(master = MWindow,
                                    text = 'Aerodynamics (coming soon)',
                                    command = menuAerodynamicButton_func,
                                    width = 15,
                                    bootstyle = 'info-outline'
                                    )
 
-menuOrbitButton = ttkb.Button(master = Mwindow,
+menuOrbitButton = ttkb.Button(master = MWindow,
                              text = 'Orbit (coming soon)',
                              command = menuOrbitButton_func,
                              width = 15,
                              bootstyle = 'light-outline'
                              )
 
-menuOptionsButton = ttkb.Button(master = Mwindow,
+menuOptionsButton = ttkb.Button(master = MWindow,
                                text = 'Options (coming soon)',
                                command = menuOptionsButton_func,
                                width = 15,
@@ -269,7 +281,7 @@ menuOptionsButton.grid(row = 2,
 
 
 #run the menu
-Mwindow.mainloop() #run the window
+MWindow.mainloop() #run the window
 
 #notes on pymunk
 
