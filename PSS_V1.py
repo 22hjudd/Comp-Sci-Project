@@ -7,18 +7,21 @@ import sys #system specific parameters
 import pymunk #does the physics
 import pymunk.pygame_util #draw pymunk objects in pygame
 from pymunk.vec2d import Vec2d #vectors and positioning, such as mouse pos
-from typing import List #for lists/arrays
 import math #maths
 
 
 #main code
 
+deadWindow = tk.Tk()
+deadWindow.withdraw() #A window would normally get created on the next line of code. This window is created and hides itself so the potential window doesn't happen and disturb the user
+
+darkModeToggleStyle = ttkb.Style(master = deadWindow) #uses the dead window
 
 def menuProjectileButton_func(MWindow):
-    MWindow.destroy() #close the menu
+    MWindow.withdraw() #see later code for notes on this. Had to change from .destroy
 
     def toMainMenuPButton_func():
-        global Prun #destroy the projectiles window, used in a button func later
+        global Prun #destroy the projectiles window by stopping Prun loop, used in a button func later
         Prun = False
     
     def createProjectile():
@@ -36,9 +39,9 @@ def menuProjectileButton_func(MWindow):
         Pspace.add(cannonBallBody, cannonBallProp) #add the body of the cannon ball to the space
         return cannonBallBody, cannonBallProp #makes it able to put on screen by returning
 
-    def drawProjectile(cannonBallProp):
-        if cannonBallProp: #get the cannon ball to pass into code
-            cannonBallRect = cannonBallImage.get_rect(center = (int(cannonBallProp.position.x), int(cannonBallProp.position.y))) #make the cannon ball have a rectangle hitbox
+    def drawProjectile(cannonBallBody):
+        if cannonBallBody: #get the cannon ball to pass into code
+            cannonBallRect = cannonBallImage.get_rect(center = (int(cannonBallBody.position.x), int(cannonBallBody.position.y))) #make the cannon ball have a rectangle hitbox
             PWindow.blit(cannonBallImage, cannonBallRect) #put on screen
 
     def createCannon(Pspace):
@@ -51,10 +54,19 @@ def menuProjectileButton_func(MWindow):
         if cannonBody:
             degrees = -math.degrees(cannonBody.angle)  # Convert radians to degrees, pymunk works in radians but pygame doesn't
             cannonRotation = pygame.transform.rotate(cannonImage, degrees)  # Rotate image
-            cannonRect = cannonRotation.get_rect(center = (int(cannonBody.position.x), int(cannonBody.position.y)))
+            (cannonRect) = cannonRotation.get_rect(center = (int(cannonBody.position.x), int(cannonBody.position.y)))
             PWindow.blit(cannonRotation, cannonRect)
 
-    global PWindow
+    #FIX THIS LATER
+    def toMainMenuPButton(PWindow):
+        font = pygame.font.Font(None, 36)
+        text = font.render('Return to Main Menu', True, (255, 255, 255))
+        button_rect = text.get_rect(topleft=(20, 20))
+        pygame.draw.rect(PWindow, (100, 100, 100), button_rect.inflate(20, 10))
+        PWindow.blit(text, button_rect)
+        return button_rect
+
+    global PWindow, Pspace, cannonBallImage, cannonImage, cannonBallBody, cannonBallProp, Prun
 
     pygame.init() #initiate pygame
 
@@ -63,12 +75,6 @@ def menuProjectileButton_func(MWindow):
 
     clock = pygame.time.Clock()
 
-    #FIX THIS LATER
-    destoryPWindow = ttkb.Button(master = PWindow,
-                                text = 'Return to main menu',
-                                command = toMainMenuPButton_func
-                                )
-    destoryPWindow.pack()
 
     def projectileLogic():
         global Pspace, cannonBallImage, cannonImage, cannonBallBody, cannonBallProp #globals required variables from other functions
@@ -86,12 +92,8 @@ def menuProjectileButton_func(MWindow):
 
         drawSetup = pymunk.pygame_util.DrawOptions(PWindow) #sets up drawing stuff on the screen
 
-        static: List[pymunk.Shape] = [pymunk.Segment(Pspace.static_body,
-                                                    (0, 875),
-                                                    (2000, 875), 
-                                                    10)
-                                                    ] #the floor
-        Pspace.add(*static) #add all of static list to space. Other things may be added to this list further in development
+        floor = pymunk.Segment(Pspace.static_body, (0, 875), (2000, 875), 10) #add a static body to the space as a straight line across the screen, used as a floor. Interacts with projectiles
+        Pspace.add(floor)
 
         #Main loop
         Prun = True
@@ -120,7 +122,8 @@ def menuProjectileButton_func(MWindow):
     projectileLogic() #runs the main loop + some other stuff when menu button is clicked
 
     pygame.quit() #quit pygame
-    menu()
+    MWindow.deiconify()
+    MWindow.update()
 
 #IDEAS FOR LATER
 #Use a static body as the floor so it interacts better with hitboxes (THIS IS MOSTLY IMPLEMENTED NOW, COMPLICATED)
@@ -135,8 +138,8 @@ def menuProjectileButton_func(MWindow):
 #make a seperate function for FLYING CANNON BALL
 #125, 146
 
-def menuAerodynamicButton_func():
-    MWindow.destroy()
+def menuAerodynamicButton_func(MWindow):
+    MWindow.withdraw()
 
     pygame.init()
 
@@ -154,11 +157,12 @@ def menuAerodynamicButton_func():
         pygame.display.flip()
 
     pygame.quit()
-    menu()
+    MWindow.deiconify()
+    MWindow.update()
 
 
-def menuOrbitButton_func():
-    MWindow.destroy()
+def menuOrbitButton_func(MWindow):
+    MWindow.withdraw()
 
     pygame.init()
 
@@ -176,41 +180,73 @@ def menuOrbitButton_func():
         pygame.display.flip()
 
     pygame.quit()
-    menu()
+    MWindow.deiconify()
+    MWindow.update()
 
 
-def menuOptionsButton_func():
-    MWindow.destroy()
+def menuOptionsButton_func(MWindow):
+    MWindow.withdraw() #hides the window instead of destroying it so it can still be updated
 
-    pygame.init()
+    OpWindow = ttkb.Window(title = 'Options',
+                         themename = darkModeToggleStyle.theme_use(),
+                         size = (600, 400)
+                         )
+    
+    darkModeToggleVar = tk.BooleanVar(value = True) #set dark mode to true, as the main menu starts in dark mode, sheilding eyes from unnecessary brightness
 
-    optionsWindow = pygame.display.set_mode((600, 400))
-    pygame.display.set_caption("Options")
+    def darkModeToggle_func():
+        themeUpdate = 'darkly' if darkModeToggleVar.get() else 'flatly'
+        darkModeToggleStyle.theme_use(themeUpdate)
+        for widget in OpWindow.winfo_children():
+            widget.destroy()
 
-    #Main loop
-    Oprun = True
-    while Oprun:
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                Oprun = False
+        optionsButtonsCreation
+        OpWindow.update()
 
-        optionsWindow.fill((232, 191, 40))
-        pygame.display.flip()
+    def optionsButtonsCreation():
+        darkModeToggle = ttk.Checkbutton(OpWindow,
+                                        text = 'Dark Mode',
+                                        variable = darkModeToggleVar,
+                                        command = darkModeToggle_func
+                                        )
+        darkModeToggle.pack()
 
-    pygame.quit()
-    menu()
+        toMainMenuOPButton = ttkb.Button(OpWindow,
+                                        text = 'Return to main menu',
+                                        command = toMainMenuOPButton_func,
+                                        bootstyle = 'warning-outline'
+                                        )
+        toMainMenuOPButton.pack()
 
+    def toMainMenuOPButton_func():
+        OpWindow.destroy()
+        MWindow.deiconify() #menu window is brought back up again
+        MWindow.update()
 
-def menu():
+    optionsButtonsCreation()
+    OpWindow.mainloop()
+
+def refreshingWidgets(MWindow): #an attempt to fix changeing ttkb styles with the windows
+    for widget in MWindow.winfo_children():
+        widget.destroy()
+
+def menu(RunningWindow = None):
     global MWindow
+
+    if RunningWindow == None:
+        MWindow = ttkb.Window(title = 'Menu',
+                             themename = darkModeToggleStyle.theme_use(), 
+                             size = (600, 400)
+                             ) #make a bootstrap window for more customisation
+    else:
+        MWindow = RunningWindow
+        for widget in MWindow.winfo_children(): #tkinter finds all its widgets in MWindow
+            widget.destroy() #destroy the found widgets
+
     #setup, next 3 lines are backup window in case im stupid
     #window = tk.Tk() #create window
     #window.title('Menu') #name window
     #window.geometry('600x400') #window size
-    MWindow = ttkb.Window(title = 'Menu',
-                         themename = 'darkly', 
-                         size = (600, 400)
-                         ) #make a bootstrap window for more customisation
 
     #creating a grid
     MWindow.columnconfigure((0, 1), weight = 1)
@@ -227,29 +263,29 @@ def menu():
                    ) #puts the heading on the grid
     
     menuProjectileButton = ttkb.Button(master = MWindow,
-                                      text = 'Projectiles',
-                                      command = menuProjectileButton_func,
+                                      text = 'Projectiles (Work in progress)',
+                                      command = lambda: menuProjectileButton_func(MWindow),
                                       width = 15,
                                       bootstyle = 'success-outline'
                                       ) #Pressing button opens projectiles window, bootstyle outline creates the hover over change colour effect
 
     menuAerodynamicButton = ttkb.Button(master = MWindow,
-                                       text = 'Aerodynamics (coming soon)',
-                                       command = menuAerodynamicButton_func,
+                                       text = 'Aerodynamics (Work in Progress)',
+                                       command = lambda: menuAerodynamicButton_func(MWindow),
                                        width = 15,
                                        bootstyle = 'info-outline'
                                        )
 
     menuOrbitButton = ttkb.Button(master = MWindow,
-                                 text = 'Orbit (coming soon)',
-                                 command = menuOrbitButton_func,
+                                 text = 'Orbit (Development Starting Imminently)',
+                                 command = lambda: menuOrbitButton_func(MWindow),
                                  width = 15,
                                  bootstyle = 'light-outline'
                                  )
 
     menuOptionsButton = ttkb.Button(master = MWindow,
-                                   text = 'Options (coming soon)',
-                                   command = menuOptionsButton_func,
+                                   text = 'Options (Work in Progress)',
+                                   command = lambda: menuOptionsButton_func(MWindow),
                                    width = 15,
                                    bootstyle = 'warning-outline'
                                    )
@@ -282,11 +318,13 @@ def menu():
                           pady = 20
                           )
 
-
+    MWindow.deiconify() #one last time just in case it hasn't shown back up again
     #run the menu
     MWindow.mainloop() #run the window
 
+darkModeToggleStyle.theme_use('darkly')
 menu()
+deadWindow.mainloop()
 
 #notes on pymunk
 
