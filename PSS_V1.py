@@ -15,7 +15,7 @@ import math #maths
 deadWindow = tk.Tk()
 deadWindow.withdraw() #A window would normally get created on the next line of code. This window is created and hides itself so the potential window doesn't happen and disturb the user
 
-darkModeToggleStyle = ttkb.Style(master = deadWindow) #uses the dead window
+darkModeToggleStyle = ttkb.Style() #uses the dead window
 
 def menuProjectileButton_func(MWindow):
     MWindow.withdraw() #see later code for notes on this. Had to change from .destroy
@@ -122,6 +122,7 @@ def menuProjectileButton_func(MWindow):
     projectileLogic() #runs the main loop + some other stuff when menu button is clicked
 
     pygame.quit() #quit pygame
+    refreshingWidgets(MWindow)
     MWindow.deiconify()
     MWindow.update()
 
@@ -157,6 +158,7 @@ def menuAerodynamicButton_func(MWindow):
         pygame.display.flip()
 
     pygame.quit()
+    refreshingWidgets(MWindow)
     MWindow.deiconify()
     MWindow.update()
 
@@ -180,6 +182,7 @@ def menuOrbitButton_func(MWindow):
         pygame.display.flip()
 
     pygame.quit()
+    refreshingWidgets(MWindow)
     MWindow.deiconify()
     MWindow.update()
 
@@ -192,7 +195,7 @@ def menuOptionsButton_func(MWindow):
                          size = (600, 400)
                          )
     
-    darkModeToggleVar = tk.BooleanVar(value = True) #set dark mode to true, as the main menu starts in dark mode, sheilding eyes from unnecessary brightness
+    darkModeToggleVar = tk.BooleanVar(master = OpWindow, value = True) #set dark mode to true, as the main menu starts in dark mode, sheilding eyes from unnecessary brightness
 
     def darkModeToggle_func():
         themeUpdate = 'darkly' if darkModeToggleVar.get() else 'flatly'
@@ -200,7 +203,7 @@ def menuOptionsButton_func(MWindow):
         for widget in OpWindow.winfo_children():
             widget.destroy()
 
-        optionsButtonsCreation
+        optionsButtonsCreation()
         OpWindow.update()
 
     def optionsButtonsCreation():
@@ -211,15 +214,16 @@ def menuOptionsButton_func(MWindow):
                                         )
         darkModeToggle.pack()
 
-        toMainMenuOPButton = ttkb.Button(OpWindow,
+        toMainMenuOpButton = ttkb.Button(OpWindow,
                                         text = 'Return to main menu',
-                                        command = toMainMenuOPButton_func,
+                                        command = toMainMenuOpButton_func,
                                         bootstyle = 'warning-outline'
                                         )
-        toMainMenuOPButton.pack()
+        toMainMenuOpButton.pack()
 
-    def toMainMenuOPButton_func():
+    def toMainMenuOpButton_func():
         OpWindow.destroy()
+        refreshingWidgets(MWindow)
         MWindow.deiconify() #menu window is brought back up again
         MWindow.update()
 
@@ -229,24 +233,6 @@ def menuOptionsButton_func(MWindow):
 def refreshingWidgets(MWindow): #an attempt to fix changeing ttkb styles with the windows
     for widget in MWindow.winfo_children():
         widget.destroy()
-
-def menu(RunningWindow = None):
-    global MWindow
-
-    if RunningWindow == None:
-        MWindow = ttkb.Window(title = 'Menu',
-                             themename = darkModeToggleStyle.theme_use(), 
-                             size = (600, 400)
-                             ) #make a bootstrap window for more customisation
-    else:
-        MWindow = RunningWindow
-        for widget in MWindow.winfo_children(): #tkinter finds all its widgets in MWindow
-            widget.destroy() #destroy the found widgets
-
-    #setup, next 3 lines are backup window in case im stupid
-    #window = tk.Tk() #create window
-    #window.title('Menu') #name window
-    #window.geometry('600x400') #window size
 
     #creating a grid
     MWindow.columnconfigure((0, 1), weight = 1)
@@ -318,6 +304,25 @@ def menu(RunningWindow = None):
                           pady = 20
                           )
 
+def menu(RunningWindow = None):
+    global MWindow
+
+    if RunningWindow == None:
+        MWindow = ttkb.Window(title = 'Menu',
+                             themename = darkModeToggleStyle.theme_use(), 
+                             size = (600, 400)
+                             ) #make a bootstrap window for more customisation
+    else:
+        MWindow = RunningWindow
+        for widget in MWindow.winfo_children(): #tkinter finds all its widgets in MWindow
+            widget.destroy() #destroy the found widgets
+
+    #setup, next 3 lines are backup window in case im stupid
+    #window = tk.Tk() #create window
+    #window.title('Menu') #name window
+    #window.geometry('600x400') #window size
+
+    refreshingWidgets(MWindow)
     MWindow.deiconify() #one last time just in case it hasn't shown back up again
     #run the menu
     MWindow.mainloop() #run the window
