@@ -13,10 +13,9 @@ import math #maths
 #main code
 
 
-deadWindow = tk.Tk()
-deadWindow.withdraw() #A window would normally get created on the next line of code. This window is created and hides itself so the potential window doesn't happen and disturb the user
- 
-darkModeToggleStyle = ttkb.Style() #uses the dead window
+#set global variable
+darkMode = True
+
 
 def menuProjectileButton_func(MWindow):
     MWindow.destroy() #close the menu
@@ -183,23 +182,32 @@ def menuOrbitButton_func(MWindow):
  
  
 def menuOptionsButton_func(MWindow):
-    MWindow.destroy()
+    #MWindow.destroy()
+    def setOpWindowDarkMode(OpWindow):
+        if darkMode:
+            OpWindow.configure(background = 'black')
+        else:
+            OpWindow.configure(background = 'white')
 
     OpWindow = ttkb.Window(title = 'Options',
-                          themename = darkModeToggleStyle.theme_use(),
                           size = (600, 400)
                           )
-     
-    darkModeToggleVar = tk.BooleanVar(master = OpWindow, value = True) #set dark mode to true, as the main menu starts in dark mode, sheilding eyes from unnecessary brightness
+    
+    setOpWindowDarkMode(OpWindow)
+    
+    darkModeToggleVar = tk.BooleanVar(master = OpWindow, value = darkMode) #set dark mode to true, as the main menu starts in dark mode, sheilding eyes from unnecessary brightness
  
     def darkModeToggle_func():
-        themeUpdate = 'darkly' if darkModeToggleVar.get() else 'flatly'
-        darkModeToggleStyle.theme_use(themeUpdate)
+        global darkMode
+        darkMode = darkModeToggleVar.get()
+
+        setOpWindowDarkMode(OpWindow)
+        setMWindowDarkMode()
+        
         OpWindow.update()
     
     def toMainMenuOpButton_func():
         OpWindow.destroy()
-        menu()
     
     darkModeToggle = ttk.Checkbutton(OpWindow,
                                     text = 'Dark Mode',
@@ -208,16 +216,20 @@ def menuOptionsButton_func(MWindow):
                                     )
     darkModeToggle.pack()
 
-    toMainMenuOpButton = ttkb.Button(OpWindow,
+    toMainMenuOpButton = ttk.Button(OpWindow,
                                     text = 'Return to main menu',
                                     command = toMainMenuOpButton_func,
-                                    bootstyle = 'warning-outline'
                                     )
     toMainMenuOpButton.pack()
 
     OpWindow.mainloop()
  
- 
+def setMWindowDarkMode():
+    if darkMode:
+        MWindow.configure(background = 'black')
+    else:
+        MWindow.configure(background = 'white')
+
 def menu():
     global MWindow
     #setup, next 3 lines are backup window in case im stupid
@@ -225,7 +237,6 @@ def menu():
     #window.title('Menu') #name window
     #window.geometry('600x400') #window size
     MWindow = ttkb.Window(title = 'Menu',
-                         themename = darkModeToggleStyle.theme_use(), 
                          size = (600, 400)
                          ) #make a bootstrap window for more customisation
  
@@ -261,7 +272,7 @@ def menu():
                                  text = 'Orbit (coming soon)',
                                  command = lambda: menuOrbitButton_func(MWindow),
                                  width = 15,
-                                 bootstyle = 'light-outline'
+                                 bootstyle = 'danger-outline'
                                  )
  
     menuOptionsButton = ttkb.Button(master = MWindow,
@@ -297,10 +308,11 @@ def menu():
                           padx = 20,
                           pady = 20
                           )
+    
+    setMWindowDarkMode()
     #run the menu
     MWindow.mainloop() #run the window
 
-darkModeToggleStyle.theme_use('darkly')
 menu()
 
 #notes on pymunk
