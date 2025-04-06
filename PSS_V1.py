@@ -225,7 +225,7 @@ def menu():
     #window.title('Menu') #name window
     #window.geometry('600x400') #window size
     MWindow = ttkb.Window(title = 'Menu',
-                         themename = 'darkly', 
+                         themename = darkModeToggleStyle.theme_use(), 
                          size = (600, 400)
                          ) #make a bootstrap window for more customisation
  
