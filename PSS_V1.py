@@ -19,18 +19,13 @@ darkMode = True #this is used in the options
 
 def menuProjectileButton_func(MWindow):
     MWindow.destroy() #close the menu
-
-    def toMainMenuPButton_func():
-        global Prun #destroy the projectiles window by stopping Prun loop, used in a button func later
-        Prun = False
     
     def createProjectile():
         global cannonBallBody, cannonBallProp
-        Pvs = [(0, 0), (20, 0), (20, 20), (0, 20)] #corners of the cannon ball rectangle hitbox, relative to the centre. THESE VALUES MAY NEED CHANGING
 
         cannonBallBody = pymunk.Body(body_type = pymunk.Body.KINEMATIC) #(mass, inertia,) body type. Notes on body type at the bottom
         #                                                                for dynamic body
-        cannonBallProp = pymunk.Poly(cannonBallBody, Pvs) #body, vertices
+        cannonBallProp = pymunk.Circle(cannonBallBody, 5) #body, radius
         cannonBallProp.collision_type = 1
         cannonBallProp.friction = 0.5 #notes on friction and elasticity values at the bottom
         cannonBallProp.elasticity = 0.5 #^ comment
@@ -56,17 +51,19 @@ def menuProjectileButton_func(MWindow):
             cannonRotation = pygame.transform.rotate(cannonImage, degrees)  # Rotate image
             (cannonRect) = cannonRotation.get_rect(center = (int(cannonBody.position.x), int(cannonBody.position.y)))
             PWindow.blit(cannonRotation, cannonRect)
+
+    def dealWithCollisions(arbiter, space, data): #space and data don't seem to do anything but are appaently required by pymunk's API
+        cannonBallCollisionShape = arbiter.shapes[0] if arbiter.shapes[0].collision_type == 1 else arbiter.shapes[1]
+        floorCollisionShape = arbiter.shapes[0] if arbiter.shapes[0].collision_type == 0 else arbiter.shapes[1]
+
+        cannonBallCollisionShape.friction = 0.5
+        floorCollisionShape.friction = 0.5
+
+        cannonBallSpeed = cannonBallCollisionShape.body
+        cannonBallSpeed.velocity = cannonBallSpeed.velocity * 0.9
+
  
-    #FIX THIS LATER
-    def toMainMenuPButton(PWindow):
-        font = pygame.font.Font(None, 36)
-        text = font.render('Return to Main Menu', True, (255, 255, 255))
-        button_rect = text.get_rect(topleft=(20, 20))
-        pygame.draw.rect(PWindow, (100, 100, 100), button_rect.inflate(20, 10))
-        PWindow.blit(text, button_rect)
-        return button_rect
- 
-    global PWindow, PSpace, cannonBallImage, cannonImage, cannonBallBody, cannonBallProp, Prun
+    global PWindow, PSpace, cannonBallImage, cannonImage, cannonBallBody, cannonBallProp
  
     pygame.init() #initiate pygame
 
@@ -78,7 +75,9 @@ def menuProjectileButton_func(MWindow):
     def projectileLogic():
         global PSpace, cannonBallImage, cannonImage, cannonBallBody, cannonBallProp #globals required variables from other functions
         PSpace = pymunk.Space() #creates a space
-        PSpace.gravity = (0, 10) #horizontal gravity, vertical gravity
+        inputGravity = float(input('Enter a gravity to be used in the simulation, in terms of Earth gravity (e.g. input of 1 meaning 9.81): '))
+        finalGravity = inputGravity * 600 #since pymunk uses arbritrary values, this seemed about right from scientific estimates
+        PSpace.gravity = (0, finalGravity) #horizontal gravity, vertical gravity
 
         cannonBallImage = pygame.image.load('cannonBallImage.png') #load image
         cannonBallImage = pygame.transform.scale(cannonBallImage, (20, 20)) #scale it up in the x and y direction to be fitting size
@@ -88,11 +87,17 @@ def menuProjectileButton_func(MWindow):
 
         cannonBallBody, cannonBallProp = createProjectile() #use cannon ball body and properties to create the projectile
         cannonBody = createCannon(PSpace) #use cannon body to create the cannon in the space
- 
-        drawSetup = pymunk.pygame_util.DrawOptions(PWindow) #sets up drawing stuff on the screen
 
         floor = pymunk.Segment(PSpace.static_body, (0, 875), (2000, 875), 10) #add a static body to the space as a straight line across the screen, used as a floor. Interacts with projectiles
+        floor.friction = 0.5
+        floor.collision_type = 0
         PSpace.add(floor)
+
+        cannonBallsInFlight = []
+        initialTime = 0
+
+        collisionHandler = PSpace.add_collision_handler(0, 1)
+        collisionHandler.post_solve = dealWithCollisions
  
         #Main loop
         Prun = True
@@ -100,8 +105,18 @@ def menuProjectileButton_func(MWindow):
             for event in pygame.event.get():
                 if event.type == pygame.QUIT or event.type == pygame.KEYDOWN and (event.key in [pygame.K_ESCAPE]):
                     Prun = False #pressing red x and escape closes the projectiles window
- 
-            keyPress = pygame.key.get_pressed()
+                elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+                    initialTime = pygame.time.get_ticks()
+                elif event.type == pygame.MOUSEBUTTONUP and event.button == 1:
+                    finalTime = pygame.time.get_ticks()
+                    timeDiff = finalTime - initialTime
+                    power = max(min(timeDiff, 1000), 10) * 5
+                    impulse = Vec2d.from_polar(power, cannonBody.angle)
+                    cannonBallBody.body_type = pymunk.Body.DYNAMIC
+                    cannonBallBody.apply_impulse_at_world_point(impulse, cannonBallBody.position)
+                    cannonBallsInFlight.append((cannonBallBody, cannonBallProp))
+                    cannonBallBody, cannonBallProp = createProjectile()
+
  
             mousePoint = pymunk.pygame_util.from_pygame(Vec2d(*pygame.mouse.get_pos()), PWindow) #get the mouse position using vectors
             cannonBody.angle = (mousePoint - cannonBody.position).angle #calculate the angle of the cannon in relation to the mouse
@@ -112,7 +127,14 @@ def menuProjectileButton_func(MWindow):
             PWindow.fill((124, 252, 0)) #colour
             drawProjectile(cannonBallBody) #draws the cannon ball on screen
             drawCannon(cannonBody) #draws the cannon on the screen
-            PSpace.debug_draw(drawSetup) #draw the stuff
+            for cBF, _ in cannonBallsInFlight:
+                drawProjectile(cBF)
+
+            #breaking up the line draw to give a target to aim at in red, think of it as a 2D classic red, white, red, white target, but just side on
+            pygame.draw.line(PWindow, (255, 255, 255), (0, 875), (600, 875), 10) #white
+            pygame.draw.line(PWindow, (255, 0, 0), (600, 875), (800, 875), 10) #red
+            pygame.draw.line(PWindow, (255, 255, 255), (800, 875), (2000, 875), 10) #white
+
             fps = 60
             clock.tick(fps)
             PSpace.step(1/fps) #updates physics simulation loop every 1/fps (currently 1/60) seconds
@@ -124,25 +146,8 @@ def menuProjectileButton_func(MWindow):
 
     menu()
  
-#IDEAS FOR LATER
-#Use a static body as the floor so it interacts better with hitboxes (THIS IS MOSTLY IMPLEMENTED NOW, COMPLICATED)
-#Use horizontal gravity for aerodynamics
-#Use a center gravity point for sun
-#
-#create a function that when press a button it returns to the menu, using similar code to
-##make MWindow global, put all of the menu code into a function
-##when button pressed, just run the menu code again
-##dont forget MWindow.mainloop()
-#
-#make a seperate function for FLYING CANNON BALL
-#125, 146
- 
 def menuAerodynamicButton_func(MWindow):
     MWindow.destroy()
-
-    def toMainMenuAButton_func():
-        global Arun
-        Arun = False
 
     def createAirParticles(ASpace, airParticlesPos):
         airParticlesBody = pymunk.Body(1, 10, body_type = pymunk.Body.DYNAMIC)
@@ -198,7 +203,7 @@ def menuAerodynamicButton_func(MWindow):
     pygame.display.set_caption("Aerodynamics")
 
     ASpace = pymunk.Space()
-    ASpace.gravity = (-10, 0) #use horizontal gravity this time as pulling (<--) this time
+    ASpace.gravity = (-50, 0) #use horizontal gravity this time as pulling (<--) this time
     
     aerodynamicObjectBody, aerodynamicObjectProp = createAerodynamicObject(ASpace)
     airParticlesStore = []
