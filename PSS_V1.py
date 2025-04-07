@@ -149,31 +149,41 @@ def menuAerodynamicButton_func(MWindow):
         airParticlesBody.position = (400, 200)
         airParticlesProp = pymunk.Circle(airParticlesBody, 20) #body, radius
         ASpace.add(airParticlesBody, airParticlesProp)
-        return airParticlesProp
+        return airParticlesBody, airParticlesProp
     
-    def drawAirParticles(APs):
-        for AP in APs:
-            airParticlesPosX = int(AP.body.position.x)
-            airParticlesPosY = int(AP.body.position.y)
-            pygame.draw.circle(AWindow, (255, 255, 255), (airParticlesPosX, airParticlesPosY), 20) #screen, colour, centre, radius
+    def drawAirParticles(airParticlesBody):
+        if airParticlesBody:
+            pygame.draw.circle(AWindow, 
+                              (255, 255, 255), 
+                              (int(airParticlesBody.position.x), int(airParticlesBody.position.y)),
+                              20
+                              ) #screen, colour, centre, radius
 
     def createAerodynamicObject(ASpace):
         aerodynamicObjectBody = pymunk.Body(body_type = pymunk.Body.STATIC)
         aerodynamicObjectBody.position = (600, 450)
 
-        V1 = input('Enter corner one of your custom object') #getting vertices of custom object THIS IS SUBJECT TO CHANGE IF MORE ELEGANT SOLUTION FOUND
-        V2 = input('Enter corner two of your custom object')
-        V3 = input('Enter corner three of your custom object')
-        V4 = input('Enter corner four of your custom object')
+        Avs = []
+
+        NoV = input('How many verticies do you want your custom polygon to have?')
+        #NoV = Number of verticies
+
+        for i in range (NoV):
+            vsValues = input(f'Enter value for vertice v{i} in this format: (xvalue, yvalue). ') #Relative to the centre
+            Avs.append(vsValues)
+
 
         #Avs = [(0, 0), (20, 0), (20, 20), (0, 20)] #this is a template as used earlier so I can work with it
-        Avs = [(V1), (V2), (V3), (V4)]
-        aerodynamicObjectProp = pymunk.Poly(aerodynamicObjectProp, Avs)
+        aerodynamicObjectProp = pymunk.Poly(aerodynamicObjectBody, Avs)
         ASpace.add(aerodynamicObjectBody, aerodynamicObjectProp)
-        return aerodynamicObjectProp
+        return aerodynamicObjectBody, aerodynamicObjectProp
     
-    def drawAerodynamicObject():
-        
+    def drawAerodynamicObject(aerodynamicObjectBody):
+        colour = input('Enter a RGB value for the object, in this format: (R, G, B)')
+
+        if aerodynamicObjectBody:
+            pygame.draw.polygon(AWindow, colour,  int((aerodynamicObjectBody.position.x), int(aerodynamicObjectBody.position.y)))
+            AWindow.blit(aerodynamicObjectBody)
 
     pygame.init()
  
@@ -182,8 +192,6 @@ def menuAerodynamicButton_func(MWindow):
 
     ASpace = pymunk.Space()
     ASpace.gravity = (-10, 0) #use horizontal gravity this time as pulling (<--) this time
-    APs = []
-    APs.append(createAirParticles(ASpace))
  
     clock = pygame.time.Clock()
 
@@ -195,7 +203,6 @@ def menuAerodynamicButton_func(MWindow):
                 Arun = False
 
         AWindow.fill((173, 216, 230))
-        drawAirParticles(APs)
         fps = 60
         clock.tick(fps)
         ASpace.step(1/fps)
