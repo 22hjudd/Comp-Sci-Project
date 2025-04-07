@@ -144,33 +144,35 @@ def menuAerodynamicButton_func(MWindow):
         global Arun
         Arun = False
 
-    def createAirParticles(ASpace):
+    def createAirParticles(ASpace, airParticlesPos):
         airParticlesBody = pymunk.Body(1, 10, body_type = pymunk.Body.DYNAMIC)
-        airParticlesBody.position = (400, 200)
-        airParticlesProp = pymunk.Circle(airParticlesBody, 20) #body, radius
+        airParticlesBody.position = airParticlesPos
+        airParticlesProp = pymunk.Circle(airParticlesBody, 5) #body, radius
         ASpace.add(airParticlesBody, airParticlesProp)
         return airParticlesBody, airParticlesProp
     
-    def drawAirParticles(airParticlesBody):
-        if airParticlesBody:
-            pygame.draw.circle(AWindow, 
-                              (255, 255, 255), 
-                              (int(airParticlesBody.position.x), int(airParticlesBody.position.y)),
-                              20
-                              ) #screen, colour, centre, radius
+    def drawAirParticles(airParticlesStore):
+        for airParticleBody, _ in airParticlesStore:
+            if airParticleBody:
+                pygame.draw.circle(AWindow, 
+                                  (255, 255, 255), 
+                                  (int(airParticleBody.position.x), int(airParticleBody.position.y)),
+                                  5
+                                  ) #screen, colour, centre, radius
 
     def createAerodynamicObject(ASpace):
         aerodynamicObjectBody = pymunk.Body(body_type = pymunk.Body.STATIC)
         aerodynamicObjectBody.position = (600, 450)
 
-        Avs = []
+        Avs = [] #ready for inputed vertice values
 
-        NoV = input('How many verticies do you want your custom polygon to have?')
+        NoV = int(input('How many verticies do you want your custom polygon to have? '))
         #NoV = Number of verticies
 
         for i in range (NoV):
             vsValues = input(f'Enter value for vertice v{i} in this format: (xvalue, yvalue). ') #Relative to the centre
-            Avs.append(vsValues)
+            x, y = map(int, vsValues.strip('()').split(',')) #make string to int, strip the values of brackets and comma. Ask user to format like that to begin with so they understand what is happening
+            Avs.append((x, y))
 
 
         #Avs = [(0, 0), (20, 0), (20, 20), (0, 20)] #this is a template as used earlier so I can work with it
@@ -178,21 +180,29 @@ def menuAerodynamicButton_func(MWindow):
         ASpace.add(aerodynamicObjectBody, aerodynamicObjectProp)
         return aerodynamicObjectBody, aerodynamicObjectProp
     
-    def drawAerodynamicObject(aerodynamicObjectBody):
-        colour = input('Enter a RGB value for the object, in this format: (R, G, B)')
+    global colour
+    colour = tuple(map(int, input('Enter a RGB value for the object, in this format: (R, G, B): ').strip('()').split(',')))
 
+    def drawAerodynamicObject(aerodynamicObjectBody, aerodynamicObjectProp):
         if aerodynamicObjectBody:
-            pygame.draw.polygon(AWindow, colour,  int((aerodynamicObjectBody.position.x), int(aerodynamicObjectBody.position.y)))
-            AWindow.blit(aerodynamicObjectBody)
+            vertices = [aerodynamicObjectBody.local_to_world(v) for v in aerodynamicObjectProp.get_vertices()]
+            pygame.draw.polygon(AWindow,
+                               colour,
+                               [(int(v.x), int(v.y)) for v in vertices]
+                               )
 
     pygame.init()
- 
+    
+    global AWindow, ASpace
     AWindow = pygame.display.set_mode((1200, 900), pygame.RESIZABLE)
     pygame.display.set_caption("Aerodynamics")
 
     ASpace = pymunk.Space()
     ASpace.gravity = (-10, 0) #use horizontal gravity this time as pulling (<--) this time
- 
+    
+    aerodynamicObjectBody, aerodynamicObjectProp = createAerodynamicObject(ASpace)
+    airParticlesStore = []
+
     clock = pygame.time.Clock()
 
     #Main loop
@@ -201,8 +211,14 @@ def menuAerodynamicButton_func(MWindow):
         for event in pygame.event.get():
             if event.type == pygame.QUIT or event.type == pygame.KEYDOWN and (event.key in [pygame.K_ESCAPE]):
                 Arun = False
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                airParticles = createAirParticles(ASpace, event.pos)
+                airParticlesStore.append(airParticles)
+
 
         AWindow.fill((173, 216, 230))
+        drawAirParticles(airParticlesStore)
+        drawAerodynamicObject(aerodynamicObjectBody, aerodynamicObjectProp)
         fps = 60
         clock.tick(fps)
         ASpace.step(1/fps)
