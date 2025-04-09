@@ -1,9 +1,8 @@
 #setup
-import tkinter as tk #importing tkinter with the abbreviation tk for convinience
+import tkinter as tk #importing tkinter with the abbreviation tk for convenience
 from tkinter import ttk #classes for themed widgets
 import ttkbootstrap as ttkb #more useful tkinter, most used out of the tk libraries
 import pygame #puts the physics on the screen
-import sys #system specific parameters
 import pymunk #does the physics
 import pymunk.pygame_util #draw pymunk objects in pygame
 from pymunk.vec2d import Vec2d #vectors and positioning, such as mouse pos
@@ -52,15 +51,16 @@ def menuProjectileButton_func(MWindow):
             (cannonRect) = cannonRotation.get_rect(center = (int(cannonBody.position.x), int(cannonBody.position.y)))
             PWindow.blit(cannonRotation, cannonRect)
 
-    def dealWithCollisions(arbiter, space, data): #space and data don't seem to do anything but are appaently required by pymunk's API
+    def dealWithCollisions(arbiter, space, data): #space and data don't seem to do anything but are apparently required by pymunk's API
         cannonBallCollisionShape = arbiter.shapes[0] if arbiter.shapes[0].collision_type == 1 else arbiter.shapes[1]
         floorCollisionShape = arbiter.shapes[0] if arbiter.shapes[0].collision_type == 0 else arbiter.shapes[1]
 
         cannonBallCollisionShape.friction = 0.5
         floorCollisionShape.friction = 0.5
 
+        #backup in case friction doesn't work. Subtle so it will slow down slowly if it doesn't
         cannonBallSpeed = cannonBallCollisionShape.body
-        cannonBallSpeed.velocity = cannonBallSpeed.velocity * 0.9
+        cannonBallSpeed.velocity = cannonBallSpeed.velocity * 0.8
 
  
     global PWindow, PSpace, cannonBallImage, cannonImage, cannonBallBody, cannonBallProp
@@ -76,7 +76,7 @@ def menuProjectileButton_func(MWindow):
         global PSpace, cannonBallImage, cannonImage, cannonBallBody, cannonBallProp #globals required variables from other functions
         PSpace = pymunk.Space() #creates a space
         inputGravity = float(input('Enter a gravity to be used in the simulation, in terms of Earth gravity (e.g. input of 1 meaning 9.81): '))
-        finalGravity = inputGravity * 600 #since pymunk uses arbritrary values, this seemed about right from scientific estimates
+        finalGravity = inputGravity * 600 #since pymunk uses arbitrary values, this seemed about right from scientific estimates
         PSpace.gravity = (0, finalGravity) #horizontal gravity, vertical gravity
 
         cannonBallImage = pygame.image.load('cannonBallImage.png') #load image
@@ -93,10 +93,10 @@ def menuProjectileButton_func(MWindow):
         floor.collision_type = 0
         PSpace.add(floor)
 
-        cannonBallsInFlight = []
-        initialTime = 0
+        cannonBallsInFlight = [] #list of all the cannonballs so the exisitng ones can still be on screen
+        initialTime = 0 #start time
 
-        collisionHandler = PSpace.add_collision_handler(0, 1)
+        collisionHandler = PSpace.add_collision_handler(0, 1) #collision handler deals with objects that have a collision type 0 and 1
         collisionHandler.post_solve = dealWithCollisions
  
         #Main loop
@@ -105,15 +105,18 @@ def menuProjectileButton_func(MWindow):
             for event in pygame.event.get():
                 if event.type == pygame.QUIT or event.type == pygame.KEYDOWN and (event.key in [pygame.K_ESCAPE]):
                     Prun = False #pressing red x and escape closes the projectiles window
-                elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
-                    initialTime = pygame.time.get_ticks()
-                elif event.type == pygame.MOUSEBUTTONUP and event.button == 1:
-                    finalTime = pygame.time.get_ticks()
-                    timeDiff = finalTime - initialTime
-                    power = max(min(timeDiff, 1000), 10) * 5
-                    impulse = Vec2d.from_polar(power, cannonBody.angle)
-                    cannonBallBody.body_type = pymunk.Body.DYNAMIC
-                    cannonBallBody.apply_impulse_at_world_point(impulse, cannonBallBody.position)
+                elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1: #mouse pressed down
+                    initialTime = pygame.time.get_ticks() #record the time when mouse first pressed down
+                elif event.type == pygame.MOUSEBUTTONUP and event.button == 1: #mouse released
+                    finalTime = pygame.time.get_ticks() #record the time when mouse released
+
+                    timeDiff = finalTime - initialTime #get the time diff by final - initial
+                    
+                    rateSpeedIncrease = max(min(timeDiff, 1000), 10) * 10 #min and max values of power so it doesn't go flying off the screen. Multiply by number so easy to change values
+                    impulse = Vec2d.from_polar(rateSpeedIncrease, cannonBody.angle) #change in momentum, impulse vector, physics
+
+                    cannonBallBody.body_type = pymunk.Body.DYNAMIC #makes cannonball body dyanmic from kinematic when set earlier so that it can be affected by physics
+                    cannonBallBody.apply_impulse_at_world_point(impulse, cannonBallBody.position) #impulse set to cannonball pos
                     cannonBallsInFlight.append((cannonBallBody, cannonBallProp))
                     cannonBallBody, cannonBallProp = createProjectile()
 
@@ -121,7 +124,7 @@ def menuProjectileButton_func(MWindow):
             mousePoint = pymunk.pygame_util.from_pygame(Vec2d(*pygame.mouse.get_pos()), PWindow) #get the mouse position using vectors
             cannonBody.angle = (mousePoint - cannonBody.position).angle #calculate the angle of the cannon in relation to the mouse
             cannonBallDiff = Vec2d(-38, -20).rotated(cannonBody.angle) #change distance from the centre of the cannon
-            cannonBallBody.position = cannonBody.position + cannonBallDiff #position the cannon ball by alligning with the cannon and then differntiating it from that point
+            cannonBallBody.position = cannonBody.position + cannonBallDiff #position the cannon ball by aligning with the cannon and then differentiating it from that point
             cannonBallBody.angle = cannonBody.angle #both rotate at the same time and angle
  
             PWindow.fill((124, 252, 0)) #colour
@@ -206,7 +209,7 @@ def menuAerodynamicButton_func(MWindow):
     ASpace.gravity = (-50, 0) #use horizontal gravity this time as pulling (<--) this time
     
     aerodynamicObjectBody, aerodynamicObjectProp = createAerodynamicObject(ASpace)
-    airParticlesStore = []
+    airParticlesStore = [] #store the airparticles in a list so they don't disappear when another is created
 
     clock = pygame.time.Clock()
 
@@ -310,6 +313,7 @@ def menu():
     #window = tk.Tk() #create window
     #window.title('Menu') #name window
     #window.geometry('600x400') #window size
+
     MWindow = ttkb.Window(title = 'Menu',
                          size = (600, 400)
                          ) #make a bootstrap window for more customisation
@@ -329,14 +333,14 @@ def menu():
                    ) #puts the heading on the grid
      
     menuProjectileButton = ttkb.Button(master = MWindow,
-                                      text = 'Projectiles (Work in Progress)',
+                                      text = 'Projectiles',
                                       command = lambda: menuProjectileButton_func(MWindow),
                                       width = 15,
                                       bootstyle = 'success-outline'
                                       ) #Pressing button opens projectiles window, bootstyle outline creates the hover over change colour effect
 
     menuAerodynamicButton = ttkb.Button(master = MWindow,
-                                       text = 'Aerodynamics (Work in Progress)',
+                                       text = 'Aerodynamics',
                                        command = lambda: menuAerodynamicButton_func(MWindow),
                                        width = 15,
                                        bootstyle = 'info-outline'
@@ -350,7 +354,7 @@ def menu():
                                  )
  
     menuOptionsButton = ttkb.Button(master = MWindow,
-                                   text = 'Options (Work in Progress)',
+                                   text = 'Options',
                                    command = lambda: menuOptionsButton_func(MWindow),
                                    width = 15,
                                    bootstyle = 'warning-outline'
